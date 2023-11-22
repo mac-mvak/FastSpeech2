@@ -33,7 +33,7 @@ class DurationPredictor(nn.Module):
 
     def __init__(self,
                 encoder_dim, duration_predictor_filter_size,
-                duration_predictor_kernel_size, dropout):
+                duration_predictor_kernel_size, dropout, **kwargs):
         super(DurationPredictor, self).__init__()
 
         self.input_size = encoder_dim

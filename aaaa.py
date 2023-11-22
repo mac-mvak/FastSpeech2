@@ -1,5 +1,7 @@
 from hw_sg.utils.parse_config import ConfigParser
 from hw_sg.utils.object_loading import get_dataloaders
+import hw_sg.model as module_arch
+
 import json
 
 
@@ -17,5 +19,8 @@ for batch in tr_d:
     print(batch[0].keys())
     break
 
+model = cfg.init_obj(cfg["arch"], module_arch)
 
-
+for u in model.parameters():
+    print('aaa')
+    break

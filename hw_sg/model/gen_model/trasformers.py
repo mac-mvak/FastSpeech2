@@ -42,11 +42,13 @@ class FFTBlock(torch.nn.Module):
                  n_head,
                  d_k,
                  d_v,
+                 fft_conv1d_kernel, 
+                 fft_conv1d_padding,
                  dropout=0.1):
         super(FFTBlock, self).__init__()
         self.slf_attn = nn.MultiheadAttention(d_model, n_head, dropout=dropout, kdim=d_k, vdim=d_v, batch_first=True)
         self.pos_ffn = PositionwiseFeedForward(
-            d_model, d_inner, dropout=dropout)
+            d_model, d_inner, fft_conv1d_kernel, fft_conv1d_padding, dropout=dropout)
         self.n_head = n_head
 
     def forward(self, enc_input, non_pad_mask=None, slf_attn_mask=None):
@@ -86,7 +88,9 @@ class Encoder(nn.Module):
     def __init__(self, max_seq_len, 
                  encoder_n_layer, vocab_size, encoder_dim, PAD,
                  encoder_conv1d_filter_size, encoder_head, 
-                 dropout, **kwargs):
+                 dropout, 
+                 fft_conv1d_kernel, 
+                 fft_conv1d_padding, **kwargs):
         super(Encoder, self).__init__()
         
         len_max_seq=max_seq_len
@@ -112,6 +116,8 @@ class Encoder(nn.Module):
             encoder_head,
             encoder_dim, #// model_config.encoder_head,
             encoder_dim, #// model_config.encoder_head,
+            fft_conv1d_kernel,
+            fft_conv1d_padding,
             dropout=dropout
         ) for _ in range(n_layers)])
 
@@ -144,7 +150,8 @@ class Decoder(nn.Module):
     def __init__(self, max_seq_len, 
                  decoder_n_layer, encoder_dim, PAD,
                  encoder_conv1d_filter_size, encoder_head,
-                 dropout, **kwargs):
+                 dropout,
+                 fft_conv1d_kernel, fft_conv1d_padding, **kwargs):
 
         super(Decoder, self).__init__()
 
@@ -165,6 +172,8 @@ class Decoder(nn.Module):
             encoder_head,
             encoder_dim ,#// model_config.encoder_head,
             encoder_dim, #// model_config.encoder_head,
+            fft_conv1d_kernel, 
+            fft_conv1d_padding,
             dropout=dropout
         ) for _ in range(n_layers)])
 
@@ -188,3 +197,8 @@ class Decoder(nn.Module):
                 dec_slf_attn_list += [dec_slf_attn]
 
         return dec_output
+
+
+
+
+

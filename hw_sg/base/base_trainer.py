@@ -76,6 +76,7 @@ class BaseTrainer:
         """
         Full training logic
         """
+        self.mnt_mode = 'off'
         not_improved_count = 0
         for epoch in range(self.start_epoch, self.epochs + 1):
             self._last_epoch = epoch

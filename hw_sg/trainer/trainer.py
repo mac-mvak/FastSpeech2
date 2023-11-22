@@ -31,7 +31,6 @@ class Trainer(BaseTrainer):
             config,
             device,
             dataloaders,
-            text_encoder,
             lr_scheduler=None,
             lr_scheduler_name=None,
             len_epoch=None,
@@ -39,9 +38,9 @@ class Trainer(BaseTrainer):
     ):
         super().__init__(model, criterion, metrics, optimizer, config, device)
         self.skip_oom = skip_oom
-        self.text_encoder = text_encoder
         self.lr_scheduler_name = lr_scheduler_name
         self.config = config
+        self.batch_expand_size = config['data']['train']['batch_expand_size']
         self.train_dataloader = dataloaders["train"]
         if len_epoch is None:
             # epoch-based training
@@ -52,7 +51,7 @@ class Trainer(BaseTrainer):
             self.len_epoch = len_epoch
         self.evaluation_dataloaders = {k: v for k, v in dataloaders.items() if k != "train"}
         self.lr_scheduler = lr_scheduler
-        self.log_step = 50
+        self.log_step = 100
 
         self.train_metrics = MetricTracker(
             "loss", "grad norm", *[m.name for m in self.metrics], writer=self.writer
@@ -66,7 +65,9 @@ class Trainer(BaseTrainer):
         """
         Move all necessary tensors to the HPU
         """
-        for tensor_for_gpu in ["spectrogram", "text_encoded"]:
+        for tensor_for_gpu in ["text", "mel_target",
+                               "duration", "mel_pos",
+                               "src_pos"]:
             batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
         return batch
 
@@ -86,44 +87,49 @@ class Trainer(BaseTrainer):
         self.model.train()
         self.train_metrics.reset()
         self.writer.add_scalar("epoch", epoch)
+        tqdm_bar = tqdm(desc="train", total=self.len_epoch)
 
-        for batch_idx, batch in enumerate(
-                tqdm(self.train_dataloader, desc="train", total=self.len_epoch)
+
+        for batch_idx_list, batch_list in enumerate(
+              self.train_dataloader
         ):
-            try:
-                batch = self.process_batch(
-                    batch,
-                    is_train=True,
-                    metrics=self.train_metrics,
-                )
-            except RuntimeError as e:
-                if "out of memory" in str(e) and self.skip_oom:
-                    self.logger.warning("OOM on batch. Skipping batch.")
-                    for p in self.model.parameters():
-                        if p.grad is not None:
-                            del p.grad  # free some memory
-                    torch.cuda.empty_cache()
-                    continue
-                else:
-                    raise e
-            self.train_metrics.update("grad norm", self.get_grad_norm())
-            if batch_idx % self.log_step == 0:
-                self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
-                self.logger.debug(
-                    "Train Epoch: {} {} Loss: {:.6f}".format(
-                        epoch, self._progress(batch_idx), batch["loss"].item()
+            for batch_id, batch in enumerate(batch_list):
+                tqdm_bar.update(1)
+                try:
+                    batch = self.process_batch(
+                        batch,
+                        is_train=True,
+                        metrics=self.train_metrics,
                     )
-                )
-                if self.lr_scheduler_name!="ReduceLROnPlateau":
-                    lr_epoch = self.lr_scheduler.get_last_lr()[0]
-                else:
-                    lr_epoch = self.optimizer.param_groups[0]['lr']
-                self.writer.add_scalar(
-                   "learning rate", lr_epoch
-                )
-                self._log_predictions(**batch)
-                self._log_spectrogram(batch["spectrogram"])
-                self._log_scalars(self.train_metrics)
+                except RuntimeError as e:
+                    if "out of memory" in str(e) and self.skip_oom:
+                        self.logger.warning("OOM on batch. Skipping batch.")
+                        for p in self.model.parameters():
+                            if p.grad is not None:
+                                del p.grad  # free some memory
+                        torch.cuda.empty_cache()
+                        continue
+                    else:
+                        raise e
+                self.train_metrics.update("grad norm", self.get_grad_norm())
+                batch_idx = batch_idx_list * self.batch_expand_size + batch_id
+                if batch_idx % self.log_step == 0:
+                    self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
+                    self.logger.debug(
+                        "Train Epoch: {} {} Loss: {:.6f}".format(
+                            epoch, self._progress(batch_idx), batch["loss"].item()
+                        )
+                    )
+                    if self.lr_scheduler_name!="ReduceLROnPlateau":
+                        lr_epoch = self.lr_scheduler.get_last_lr()[0]
+                    else:
+                        lr_epoch = self.optimizer.param_groups[0]['lr']
+                    self.writer.add_scalar(
+                    "learning rate", lr_epoch
+                    )
+                    #self._log_predictions(**batch)
+                    #self._log_spectrogram(batch["spectrogram"])
+                    self._log_scalars(self.train_metrics)
                 # we don't want to reset train metrics at the start of every epoch
                 # because we are interested in recent train metrics
                 last_train_metrics = self.train_metrics.result()
@@ -151,10 +157,10 @@ class Trainer(BaseTrainer):
         else:
             batch["logits"] = outputs
 
-        batch["log_probs"] = F.log_softmax(batch["logits"], dim=-1)
-        batch["log_probs_length"] = self.model.transform_input_lengths(
-            batch["spectrogram_length"]
-        )
+        #batch["log_probs"] = F.log_softmax(batch["logits"], dim=-1)
+        #batch["log_probs_length"] = self.model.transform_input_lengths(
+        #    batch["spectrogram_length"]
+        #)
         batch["loss"] = self.criterion(**batch)
         if is_train:
             batch["loss"].backward()

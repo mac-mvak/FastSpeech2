@@ -1,7 +1,5 @@
-from hw_sg.model.baseline_model import BaselineModel
-from hw_sg.model.deepspeech import DeepSpeech
+from hw_sg.model.gen_model.FastSpeech import FastSpeech
 
 __all__ = [
-    "BaselineModel",
-    "DeepSpeech"
+    "FastSpeech"
 ]

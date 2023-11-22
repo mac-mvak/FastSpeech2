@@ -104,11 +104,11 @@ def reprocess_tensor(batch, cut_list):
     durations = pad_1D_tensor(durations)
     mel_targets = pad_2D_tensor(mel_targets)
 
-    out = {"text": texts,
-           "mel_target": mel_targets,
-           "duration": durations,
-           "mel_pos": mel_pos,
-           "src_pos": src_pos,
+    out = {"text": texts.long(),
+           "mel_target": mel_targets.float(),
+           "duration": durations.int(),
+           "mel_pos": mel_pos.long(),
+           "src_pos": src_pos.long(),
            "mel_max_len": max_mel_len}
 
     return out

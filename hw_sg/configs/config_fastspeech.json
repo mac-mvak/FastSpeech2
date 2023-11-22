@@ -15,17 +15,46 @@
     "spectrogram": []
   },
   "arch": {
-    "type": "LSTM_Linear",
+    "type": "FastSpeech",
     "args": {
-      "n_feats": 128,
-      "fc_hidden": 128,
-      "num_layers":3
+      "vocab_size": 300,
+      "max_seq_len": 3000,
+  
+      "encoder_dim" : 256,
+      "encoder_n_layer": 4,
+      "encoder_head": 2,
+      "encoder_conv1d_filter_size": 1024,
+  
+      "decoder_dim": 256,
+      "decoder_n_layer": 4,
+      "decoder_head": 2,
+      "decoder_conv1d_filter_size" : 1024,
+  
+      "fft_conv1d_kernel" :[9, 1],
+      "fft_conv1d_padding" : [4, 0],
+  
+      "duration_predictor_filter_size": 256,
+      "duration_predictor_kernel_size": 3,
+      "dropout": 0.1,
+      
+      "PAD":  0,
+      "UNK": 1,
+      "BOS": 2,
+      "EOS": 3,
+  
+      "PAD_WORD": "<blank>",
+      "UNK_WORD": "<unk>",
+      "BOS_WORD" :"<s>",
+      "EOS_WORD": "</s>",
+
+      "num_mels": 80
     }
   },
   "data": {
     "train": {
-      "batch_size": 64,
-      "num_workers": 1,
+      "batch_size": 32,
+      "num_workers": 8,
+      "batch_expand_size" :3,
       "datasets": [
         {
           "type": "LJspeechDataset",
@@ -33,8 +62,7 @@
             "mel_ground_truth": "./mels",
             "alignment_path": "./alignments",
             "data_path": "./data/train.txt",
-            "text_cleaners": ["english_cleaners"],
-            "batch_expand_size" :32
+            "text_cleaners": ["english_cleaners"]
           }
         }
       ]
@@ -43,31 +71,35 @@
   "optimizer": {
     "type": "Adam",
     "args": {
-      "lr": 3e-4
+      "lr": 1e-3
     }
   },
   "loss": {
-    "type": "CTCLoss",
+    "type": "FastSpeechLoss",
     "args": {}
   },
   "metrics": [],
   "lr_scheduler": {
-    "type": "ReduceLROnPlateau",
+    "type": "OneCycleLR",
     "args": {
-      "factor":0.5,
-      "patience":5
+      "steps_per_epoch":1000,
+      "epochs":10,
+      "anneal_strategy": "cos",
+      "max_lr": 1e-3,
+      "pct_start": 0.1
     }
   },
   "trainer": {
-    "epochs": 100,
+    "epochs": 10,
     "save_dir": "saved/",
-    "save_period": 5,
+    "save_period": 1000,
     "verbosity": 2,
     "monitor": "min val_loss",
     "early_stop": 100,
     "visualize": "wandb",
-    "wandb_project": "asr_project",
-    "len_epoch": 100,
-    "grad_norm_clip": 10
+    "wandb_project": "FastSpeech_project",
+    "wandb_name" : "FastSpeechTry",
+    "len_epoch": 1000,
+    "grad_norm_clip": 1
   }
 }
