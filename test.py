@@ -2,18 +2,18 @@ import argparse
 import json
 import os
 from pathlib import Path
-from hw_asr.metric.utils import calc_cer, calc_wer
-from hw_asr.utils import MetricTracker
+from hw_sg.metric.utils import calc_cer, calc_wer
+from hw_sg.utils import MetricTracker
 
 
 import torch
 from tqdm import tqdm
 
-import hw_asr.model as module_model
-from hw_asr.trainer import Trainer
-from hw_asr.utils import ROOT_PATH
-from hw_asr.utils.object_loading import get_dataloaders
-from hw_asr.utils.parse_config import ConfigParser
+import hw_sg.model as module_model
+from hw_sg.trainer import Trainer
+from hw_sg.utils import ROOT_PATH
+from hw_sg.utils.object_loading import get_dataloaders
+from hw_sg.utils.parse_config import ConfigParser
 
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
