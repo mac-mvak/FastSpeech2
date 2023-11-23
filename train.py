@@ -76,7 +76,7 @@ if __name__ == "__main__":
     args.add_argument(
         "-c",
         "--config",
-        default="/home/mac-mvak/code_disk/FastSpeech2/hw_sg/configs/config_fastspeech.json",
+        default="/home/mac-mvak/code_disk/FastSpeech2/hw_sg/configs/config_fastspeech2.json",
         type=str,
         help="config file path (default: None)",
     )

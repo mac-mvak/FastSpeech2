@@ -10,3 +10,14 @@ __pycache__
 check
 results
 
+Invertible1x1Conv.patch
+.gitignore
+Conv1d.patch
+ModuleList.patch
+ConvTranspose1d.patch
+.gitignore
+WN.patch
+Wa
+WaveGlow.patch
+aaaa.py
+final_data/model.pth

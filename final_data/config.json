@@ -1,0 +1,119 @@
+{
+    "name": "default_config",
+    "n_gpu": 1,
+    "preprocessing": {
+        "sr": 16000,
+        "spectrogram": {
+            "type": "MelSpectrogram",
+            "args": {}
+        },
+        "log_spec": true
+    },
+    "augmentations": {
+        "wave": [],
+        "spectrogram": []
+    },
+    "arch": {
+        "type": "FastSpeech",
+        "args": {
+            "vocab_size": 300,
+            "max_seq_len": 3000,
+            "encoder_dim": 256,
+            "encoder_n_layer": 4,
+            "encoder_head": 2,
+            "encoder_conv1d_filter_size": 1024,
+            "decoder_dim": 256,
+            "decoder_n_layer": 4,
+            "decoder_head": 2,
+            "decoder_conv1d_filter_size": 1024,
+            "fft_conv1d_kernel": [
+                9,
+                1
+            ],
+            "fft_conv1d_padding": [
+                4,
+                0
+            ],
+            "var_predictor_filter_size": 256,
+            "var_predictor_kernel_size": 3,
+            "var_dropout": 0.5,
+            "dropout": 0.1,
+            "energy_min": 15.023642539978027,
+            "energy_max": 91.4197006225586,
+            "min_pitch": 59.913448819015024,
+            "max_pitch": 887.2688230720693,
+            "num_bins": 256,
+            "PAD": 0,
+            "UNK": 1,
+            "BOS": 2,
+            "EOS": 3,
+            "PAD_WORD": "<blank>",
+            "UNK_WORD": "<unk>",
+            "BOS_WORD": "<s>",
+            "EOS_WORD": "</s>",
+            "num_mels": 80
+        }
+    },
+    "data": {
+        "train": {
+            "batch_size": 48,
+            "num_workers": 8,
+            "batch_expand_size": 10,
+            "datasets": [
+                {
+                    "type": "LJspeechDataset",
+                    "args": {
+                        "mel_ground_truth": "data/mels",
+                        "alignment_path": "data/alignments",
+                        "data_path": "./data/train.txt",
+                        "energies_path": "./data/energies",
+                        "pitch_path": "./data/pitches",
+                        "text_cleaners": [
+                            "english_cleaners"
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 0.001,
+            "betas": [
+                0.9,
+                0.98
+            ],
+            "eps": 1e-09
+        }
+    },
+    "loss": {
+        "type": "FastSpeechLoss",
+        "args": {}
+    },
+    "metrics": [],
+    "lr_scheduler": {
+        "type": "OneCycleLR",
+        "args": {
+            "steps_per_epoch": 11000,
+            "epochs": 16,
+            "anneal_strategy": "cos",
+            "max_lr": 0.001,
+            "pct_start": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 16,
+        "save_dir": "saved/",
+        "save_period": 1,
+        "verbosity": 2,
+        "monitor": "min val_loss",
+        "early_stop": 100,
+        "visualize": "wandb",
+        "wandb_project": "FastSpeech_project",
+        "wandb_name": "FastSpeech2",
+        "len_epoch": 11000,
+        "grad_norm_clip": 1
+    }
+}
+

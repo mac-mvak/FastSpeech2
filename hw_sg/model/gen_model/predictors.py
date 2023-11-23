@@ -151,6 +151,7 @@ class VarianceAdapter(nn.Module):
             buckets = torch.bucketize(torch.log1p(target), bins)
         else:
             estimated = (torch.exp(pred) - 1) * coeff
+            estimated[estimated < 0] = 0
             buckets = torch.bucketize(torch.log1p(estimated), bins)
         
         if factor_type=='energy':

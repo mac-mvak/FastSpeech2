@@ -60,7 +60,7 @@
   },
   "data": {
     "train": {
-      "batch_size": 48,
+      "batch_size": 32,
       "num_workers": 8,
       "batch_expand_size" :10,
       "datasets": [
@@ -94,15 +94,15 @@
   "lr_scheduler": {
     "type": "OneCycleLR",
     "args": {
-      "steps_per_epoch":1000,
-      "epochs":20,
+      "steps_per_epoch":10000,
+      "epochs":16,
       "anneal_strategy": "cos",
       "max_lr": 1e-3,
       "pct_start": 0.1  
     }
   },
   "trainer": {
-    "epochs": 20,
+    "epochs": 16,
     "save_dir": "saved/",
     "save_period": 1,
     "verbosity": 2,
@@ -110,8 +110,8 @@
     "early_stop": 100,
     "visualize": "wandb",
     "wandb_project": "FastSpeech_project",
-    "wandb_name" : "FastSpeech1.5+Energy",
-    "len_epoch": 1000,
+    "wandb_name" : "FastSpeech2+L1_Loss",
+    "len_epoch": 10000,
     "grad_norm_clip": 1
   }
 }
