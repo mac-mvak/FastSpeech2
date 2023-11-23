@@ -59,8 +59,8 @@
         {
           "type": "LJspeechDataset",
           "args": {
-            "mel_ground_truth": "./mels",
-            "alignment_path": "./alignments",
+            "mel_ground_truth": "data/mels",
+            "alignment_path": "data/alignments",
             "data_path": "./data/train.txt",
             "text_cleaners": ["english_cleaners"]
           }
@@ -71,7 +71,9 @@
   "optimizer": {
     "type": "Adam",
     "args": {
-      "lr": 1e-3
+      "lr": 1e-3,
+      "betas": [0.9, 0.98],
+      "eps": 1e-9
     }
   },
   "loss": {
@@ -83,22 +85,22 @@
     "type": "OneCycleLR",
     "args": {
       "steps_per_epoch":1000,
-      "epochs":10,
+      "epochs":20,
       "anneal_strategy": "cos",
       "max_lr": 1e-3,
       "pct_start": 0.1
     }
   },
   "trainer": {
-    "epochs": 10,
+    "epochs": 20,
     "save_dir": "saved/",
-    "save_period": 1000,
+    "save_period": 1,
     "verbosity": 2,
     "monitor": "min val_loss",
     "early_stop": 100,
     "visualize": "wandb",
     "wandb_project": "FastSpeech_project",
-    "wandb_name" : "FastSpeechTry",
+    "wandb_name" : "FastSpeechLONG",
     "len_epoch": 1000,
     "grad_norm_clip": 1
   }

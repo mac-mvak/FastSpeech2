@@ -13,7 +13,6 @@ from tqdm import tqdm
 from hw_sg.base import BaseTrainer
 from hw_sg.base.base_text_encoder import BaseTextEncoder
 from hw_sg.logger.utils import plot_spectrogram_to_buf
-from hw_sg.metric.utils import calc_cer, calc_wer
 from hw_sg.utils import inf_loop, MetricTracker
 
 
@@ -241,17 +240,14 @@ class Trainer(BaseTrainer):
         rows = {}
         for pred, target, raw_pred, audio_path, audio in tuples[:examples_to_log]:
             target = BaseTextEncoder.normalize_text(target)
-            wer = calc_wer(target, pred) * 100
-            cer = calc_cer(target, pred) * 100
+
 
             rows[Path(audio_path).name] = {
                 "orig_audio" : self.writer.wandb.Audio(audio_path),
                 "augm_audio" : self.writer.wandb.Audio(audio.squeeze().numpy(), sample_rate=16000),
                 "target": target,
                 "raw prediction": raw_pred,
-                "predictions": pred,
-                "wer": wer,
-                "cer": cer,
+                "predictions": pred
             }
         self.writer.add_table("predictions", pd.DataFrame.from_dict(rows, orient="index"))
 

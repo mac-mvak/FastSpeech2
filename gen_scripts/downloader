@@ -1,5 +1,5 @@
 #download LjSpeech
-wget https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2 -o /dev/null
+wget https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2 
 mkdir data
 tar -xvf LJSpeech-1.1.tar.bz2 >> /dev/null
 mv LJSpeech-1.1 data/LJSpeech-1.1
@@ -15,15 +15,15 @@ mv waveglow_256channels_ljs_v2.pt waveglow/pretrained_model/waveglow_256channels
 gdown https://drive.google.com/uc?id=1BoVCy6B2fDX7YOPY1pvcnjKucqvcTSqk
 tar -xvf mel.tar.gz
 echo $(ls mels | wc -l)
+mv mels data/mels
 
 #download alignments
 wget https://github.com/xcmyz/FastSpeech/raw/master/alignments.zip
 unzip alignments.zip >> /dev/null
+mv alignments data/alignments
 
 # we will use waveglow code, data and audio preprocessing from this repo
 git clone https://github.com/xcmyz/FastSpeech.git
-mv FastSpeech/text .
 mv FastSpeech/audio .
-mv FastSpeech/waveglow/* waveglow/
 mv FastSpeech/utils.py .
 mv FastSpeech/glow.py .

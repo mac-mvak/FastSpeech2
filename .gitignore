@@ -5,5 +5,5 @@ mels
 saved
 wandb
 test_data
-waveglow
+waveglow/pretrained_model
 __pycache__
