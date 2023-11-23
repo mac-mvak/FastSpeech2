@@ -7,3 +7,6 @@ wandb
 test_data
 waveglow/pretrained_model
 __pycache__
+check
+results
+

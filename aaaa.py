@@ -19,7 +19,7 @@ WaveGlow = utils.get_WaveGlow()
 WaveGlow = WaveGlow.cuda()
 
 
-with open('/home/mac-mvak/code_disk/FastSpeech2/saved/models/default_config/1123_015539/config.json') as f:
+with open('/home/mac-mvak/code_disk/FastSpeech2/check/config.json') as f:
     cfg = json.load(f)
 
 
@@ -28,7 +28,7 @@ cfg = ConfigParser(cfg)
 device = torch.device('cuda:0')
 model = cfg.init_obj(cfg["arch"], module_arch)
 model.load_state_dict(torch.load(
-    '/home/mac-mvak/code_disk/FastSpeech2/saved/models/default_config/1123_015539/checkpoint-epoch4.pth', map_location='cuda:0')["state_dict"])
+    '/home/mac-mvak/code_disk/FastSpeech2/check/checkpoint-epoch1.pth', map_location='cuda:0')["state_dict"])
 model = model.to(device)
 model = model.eval()
 
@@ -48,7 +48,7 @@ text_cleaners = ['english_cleaners']
 
 def get_data():
     tests = [ 
-        "I am very happy to see you again!",
+        "Vatoadmin has awful videos and texts. Literally the worst blogger",
         "Durian model is a very good speech synthesis!",
         "When I was twenty, I fell in love with a girl.",
         "I remove attention module in decoder and use average pooling to implement predicting r frames at once",

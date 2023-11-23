@@ -77,6 +77,8 @@ def reprocess_tensor(batch, cut_list):
     texts = [batch[ind]["text"] for ind in cut_list]
     mel_targets = [batch[ind]["mel_target"] for ind in cut_list]
     durations = [batch[ind]["duration"] for ind in cut_list]
+    energies = [batch[ind]["energy"] for ind in cut_list]
+
 
     length_text = np.array([])
     for text in texts:
@@ -102,9 +104,11 @@ def reprocess_tensor(batch, cut_list):
 
     texts = pad_1D_tensor(texts)
     durations = pad_1D_tensor(durations)
+    energies = pad_1D_tensor(energies)
     mel_targets = pad_2D_tensor(mel_targets)
 
     out = {"text": texts.long(),
+           "energy_target": energies,
            "mel_target": mel_targets.float(),
            "duration": durations.int(),
            "mel_pos": mel_pos.long(),

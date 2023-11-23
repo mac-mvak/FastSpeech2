@@ -8,12 +8,16 @@ class FastSpeechLoss(nn.Module):
         self.mse_loss = nn.MSELoss()
         self.l1_loss = nn.L1Loss()
 
-    def forward(self, mel_output, duration_predicted, mel_target, duration, **kwargs):
+    def forward(self, mel_output, duration_predicted, energy_predicted,
+                 mel_target, duration, energy_target, **kwargs):
         mel_loss = self.mse_loss(mel_output, mel_target)
 
-        duration_predictor_loss = self.l1_loss(duration_predicted,
+        duration_predictor_loss = self.mse_loss(duration_predicted,
                                                torch.log(duration.float() + 1))
+        
+        energy_predictor_loss = self.mse_loss(energy_predicted,
+                                               torch.log(energy_target.float() + 1))
 
-        loss = mel_loss + duration_predictor_loss
+        loss = mel_loss + duration_predictor_loss + energy_predictor_loss
 
         return loss

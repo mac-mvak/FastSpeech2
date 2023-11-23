@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 
 
@@ -28,19 +29,19 @@ class Transpose(nn.Module):
 
 
 
-class DurationPredictor(nn.Module):
+class FactorPredictor(nn.Module):
     """ Duration Predictor """
 
     def __init__(self,
-                encoder_dim, duration_predictor_filter_size,
-                duration_predictor_kernel_size, dropout, **kwargs):
-        super(DurationPredictor, self).__init__()
+                encoder_dim, var_predictor_filter_size,
+                var_predictor_kernel_size, var_dropout, **kwargs):
+        super(FactorPredictor, self).__init__()
 
         self.input_size = encoder_dim
-        self.filter_size = duration_predictor_filter_size
-        self.kernel = duration_predictor_kernel_size
-        self.conv_output_size = duration_predictor_filter_size
-        self.dropout = dropout
+        self.filter_size = var_predictor_filter_size
+        self.kernel = var_predictor_kernel_size
+        self.conv_output_size = var_predictor_filter_size
+        self.dropout = var_dropout
 
         self.conv_net = nn.Sequential(
             Transpose(-1, -2),
@@ -83,7 +84,7 @@ class LengthRegulator(nn.Module):
 
     def __init__(self, **params):
         super(LengthRegulator, self).__init__()
-        self.duration_predictor = DurationPredictor(**params)
+        self.duration_predictor = FactorPredictor(**params)
 
     def LR(self, x, duration_predictor_output, mel_max_length=None):
         expand_max_len = torch.max(
@@ -117,4 +118,43 @@ class LengthRegulator(nn.Module):
                 [torch.Tensor([i+1  for i in range(out.size(1))])]
             ).long().to(x.device)
             return out, mel_pos
+
+
+class VarianceAdapter(nn.Module):
+    """ Variance Analyzer for Energy, Duration, Pitch """
+    def __init__(self, **params):
+        super(VarianceAdapter, self).__init__()
+        self.duration_regulator = LengthRegulator(**params)
+        self.energy_predictor = FactorPredictor(**params)
+
+        energies = [params['energy_min'], params['energy_max']]
+        ener_bins = torch.linspace(np.log(energies[0] +1), np.log(energies[1]+2), params['num_bins'])
+        self.register_buffer('ener_bins', ener_bins)
+        self.ener_embeds = nn.Embedding(params['num_bins'], params['encoder_dim'])
+    
+    def get_discr(self, factor_type, x, target=None, coeff=1.):
+        if factor_type == 'energy':
+            pred = self.energy_predictor(x)
+            bins = self.ener_bins
+        
+        if target is not None:
+            buckets = torch.bucketize(torch.log1p(target), bins)
+        else:
+            estimated = (torch.exp(pred) - 1) * coeff
+            buckets = torch.bucketize(torch.log1p(estimated), bins)
+        
+        if factor_type=='energy':
+            return self.ener_embeds(buckets), pred
+
+    def forward(self, enc_output, length_target=None, energy_target=None, mel_max_length=None, length_coeff=1, energy_coeff=1):
+        out, duration_predicted = self.duration_regulator(enc_output, target=length_target, mel_max_length=mel_max_length, alpha=length_coeff)
+
+        ener_embeds, ener_pred = self.get_discr('energy', out, energy_target, energy_coeff)
+
+        combined_embeds = out + ener_embeds
+        return combined_embeds, duration_predicted, ener_pred
+
+ 
+
+
 
