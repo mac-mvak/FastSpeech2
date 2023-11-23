@@ -126,16 +126,26 @@ class VarianceAdapter(nn.Module):
         super(VarianceAdapter, self).__init__()
         self.duration_regulator = LengthRegulator(**params)
         self.energy_predictor = FactorPredictor(**params)
+        self.pitch_predictor = FactorPredictor(**params)
 
         energies = [params['energy_min'], params['energy_max']]
         ener_bins = torch.linspace(np.log(energies[0] +1), np.log(energies[1]+2), params['num_bins'])
         self.register_buffer('ener_bins', ener_bins)
         self.ener_embeds = nn.Embedding(params['num_bins'], params['encoder_dim'])
+
+        pitches = [params['min_pitch'], params['max_pitch']]
+        pitch_bins = torch.linspace(np.log(pitches[0] +1), np.log(pitches[1]+2), params['num_bins'])
+        self.register_buffer('pitch_bins', pitch_bins)
+        self.pitch_embeds = nn.Embedding(params['num_bins'], params['encoder_dim'])
     
     def get_discr(self, factor_type, x, target=None, coeff=1.):
         if factor_type == 'energy':
             pred = self.energy_predictor(x)
             bins = self.ener_bins
+
+        if factor_type == 'pitch':
+            pred = self.pitch_predictor(x)
+            bins = self.pitch_bins
         
         if target is not None:
             buckets = torch.bucketize(torch.log1p(target), bins)
@@ -145,14 +155,18 @@ class VarianceAdapter(nn.Module):
         
         if factor_type=='energy':
             return self.ener_embeds(buckets), pred
+        if factor_type == 'pitch':
+            return self.pitch_embeds(buckets), pred
 
-    def forward(self, enc_output, length_target=None, energy_target=None, mel_max_length=None, length_coeff=1, energy_coeff=1):
+    def forward(self, enc_output, length_target=None, energy_target=None, pitch_target=None,
+                 mel_max_length=None, length_coeff=1, energy_coeff=1, pitch_coeff=1):
         out, duration_predicted = self.duration_regulator(enc_output, target=length_target, mel_max_length=mel_max_length, alpha=length_coeff)
 
         ener_embeds, ener_pred = self.get_discr('energy', out, energy_target, energy_coeff)
+        pitch_embeds, pitch_pred = self.get_discr('pitch', out, pitch_target, pitch_coeff)
 
-        combined_embeds = out + ener_embeds
-        return combined_embeds, duration_predicted, ener_pred
+        combined_embeds = out + ener_embeds + pitch_embeds
+        return combined_embeds, duration_predicted, ener_pred, pitch_pred
 
  
 

@@ -19,7 +19,7 @@ WaveGlow = utils.get_WaveGlow()
 WaveGlow = WaveGlow.cuda()
 
 
-with open('/home/mac-mvak/code_disk/FastSpeech2/check/config.json') as f:
+with open('/home/mac-mvak/code_disk/FastSpeech2/saved/models/default_config/1123_090751/config.json') as f:
     cfg = json.load(f)
 
 
@@ -28,12 +28,12 @@ cfg = ConfigParser(cfg)
 device = torch.device('cuda:0')
 model = cfg.init_obj(cfg["arch"], module_arch)
 model.load_state_dict(torch.load(
-    '/home/mac-mvak/code_disk/FastSpeech2/check/checkpoint-epoch1.pth', map_location='cuda:0')["state_dict"])
+    '/home/mac-mvak/code_disk/FastSpeech2/saved/models/default_config/1123_090751/checkpoint-epoch6.pth', map_location='cuda:0')["state_dict"])
 model = model.to(device)
 model = model.eval()
 
 def synthesis(model, text, alpha=1.0):
-    text = np.array(phn)
+    text = np.array(text)
     text = np.stack([text])
     src_pos = np.array([i+1 for i in range(text.shape[1])])
     src_pos = np.stack([src_pos])
@@ -41,7 +41,7 @@ def synthesis(model, text, alpha=1.0):
     src_pos = torch.from_numpy(src_pos).long().to(device)
     
     with torch.no_grad():
-        out = model.forward(sequence, src_pos, alpha=alpha)
+        out = model.forward(sequence, src_pos, length_coeff=alpha)
     mel = out['mel_output']
     return mel.cpu().transpose(0, 1), mel.transpose(1, 2)
 text_cleaners = ['english_cleaners']

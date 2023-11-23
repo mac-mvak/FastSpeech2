@@ -25,7 +25,7 @@ def process_text(train_text_path):
         return txt
 
 
-def get_data_to_buffer(data_path, mel_ground_truth, alignment_path, energies_path, text_cleaners, batch_expand_size):
+def get_data_to_buffer(data_path, mel_ground_truth, alignment_path, energies_path, pitch_path, text_cleaners, batch_expand_size):
     buffer = list()
     text = process_text(data_path)
 
@@ -43,15 +43,20 @@ def get_data_to_buffer(data_path, mel_ground_truth, alignment_path, energies_pat
         energy_name = os.path.join(
             energies_path, "ljspeech-energy-%05d.npy" % (i+1))
         energy = np.load(energy_name)
+        pitch_name = os.path.join(
+            pitch_path, "ljspeech-pitch-%05d.npy" % (i+1))
+        pitch = np.load(pitch_name)
 
         character = torch.from_numpy(character)
         duration = torch.from_numpy(duration)
         mel_gt_target = torch.from_numpy(mel_gt_target)
         energy = torch.from_numpy(energy)
+        pitch = torch.from_numpy(pitch)
 
         buffer.append({"text": character, "duration": duration,
                        "mel_target": mel_gt_target,
                        "energy": energy,
+                       "pitch": pitch,
                        'batch_expand_size': batch_expand_size})
 
     end = time.perf_counter()
@@ -61,9 +66,9 @@ def get_data_to_buffer(data_path, mel_ground_truth, alignment_path, energies_pat
 
 class LJspeechDataset(Dataset):
     def __init__(self, data_path, mel_ground_truth, alignment_path, energies_path,
-                  text_cleaners, batch_expand_size, *args, **kwargs):
+                  text_cleaners, batch_expand_size, pitch_path, *args, **kwargs):
         buffer = get_data_to_buffer(data_path, mel_ground_truth,
-                                     alignment_path, energies_path, text_cleaners, batch_expand_size)
+                                     alignment_path, energies_path, pitch_path, text_cleaners, batch_expand_size)
         self.buffer = buffer
         self.length_dataset = len(self.buffer)
 

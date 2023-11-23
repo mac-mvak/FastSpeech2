@@ -9,6 +9,12 @@ import torch.nn.functional as F
 from torch.nn.utils import clip_grad_norm_
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
+import utils
+import numpy as np
+from waveglow.inference import get_wav
+
+import torchaudio
+
 
 from hw_sg.base import BaseTrainer
 from hw_sg.base.base_text_encoder import BaseTextEncoder
@@ -51,6 +57,8 @@ class Trainer(BaseTrainer):
         self.evaluation_dataloaders = {k: v for k, v in dataloaders.items() if k != "train"}
         self.lr_scheduler = lr_scheduler
         self.log_step = 100
+        self.WaveGlow = utils.get_WaveGlow()
+        self.WaveGlow.cuda()
 
         self.train_metrics = MetricTracker(
             "loss", "grad norm", *[m.name for m in self.metrics], writer=self.writer
@@ -66,7 +74,7 @@ class Trainer(BaseTrainer):
         """
         for tensor_for_gpu in ["text", "mel_target",
                                "duration", "mel_pos",
-                               "src_pos", "energy_target"]:
+                               "src_pos", "energy_target", "pitch_target"]:
             batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
         return batch
 

@@ -39,6 +39,8 @@
       "dropout": 0.1,
       "energy_min": 15.023642539978027,
       "energy_max":91.4197006225586,
+      "min_pitch": 59.913448819015024,
+      "max_pitch": 887.2688230720693,
       "num_bins":256,
       
 
@@ -69,6 +71,7 @@
             "alignment_path": "data/alignments",
             "data_path": "./data/train.txt",
             "energies_path": "./data/energies",
+            "pitch_path": "./data/pitches",
             "text_cleaners": ["english_cleaners"]
           }
         }
@@ -95,7 +98,7 @@
       "epochs":20,
       "anneal_strategy": "cos",
       "max_lr": 1e-3,
-      "pct_start": 0.1
+      "pct_start": 0.1  
     }
   },
   "trainer": {

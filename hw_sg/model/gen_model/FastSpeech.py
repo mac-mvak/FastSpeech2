@@ -36,24 +36,29 @@ class FastSpeech(nn.Module):
         return mel_output.masked_fill(mask, 0.)
 
     def forward(self, text, src_pos, mel_pos=None, mel_max_length=None, duration=None, 
-                energy_target=None, energy_coeff=1.0, length_coeff=1.0, **kwargs):        
+                energy_target=None, pitch_target=None, energy_coeff=1.0, length_coeff=1.0,
+                pitch_coeff=1, **kwargs):        
         x, mask = self.encoder(text, src_pos)
         if self.training:
-            output, duration_predicted, energy_pred = self.variance_adapter(x, 
+            output, duration_predicted, energy_pred, pitch_pred = self.variance_adapter(x, 
                                                         length_coeff=length_coeff, 
                                                         length_target=duration, mel_max_length=mel_max_length,
                                                         energy_target=energy_target,
-                                                        energy_coeff=energy_coeff)
+                                                        energy_coeff=energy_coeff,
+                                                        pitch_target=pitch_target,
+                                                        pitch_coeff=pitch_coeff)
             output = self.decoder(output, mel_pos)
             output = self.mask_tensor(output, mel_pos, mel_max_length)
             output = self.mel_linear(output)
             return {
                 "mel_output": output,
                 "duration_predicted": duration_predicted,
-                "energy_predicted":energy_pred
+                "energy_predicted":energy_pred,
+                "pitch_predicted": pitch_pred
             }
         else:
-            output, mel_pos = self.variance_adapter(x, length_coeff=length_coeff, energy_coeff=energy_coeff)
+            output, mel_pos, energy_pred, pitch_pred = self.variance_adapter(x, length_coeff=length_coeff,
+                                                                              energy_coeff=energy_coeff, pitch_coeff=pitch_coeff)
             output = self.decoder(output, mel_pos)
             output = self.mel_linear(output)
             return {"mel_output":output}
